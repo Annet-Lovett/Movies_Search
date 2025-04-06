@@ -14,8 +14,12 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import ru.yandex.practicum.moviessearch.R
 import ru.yandex.practicum.moviessearch.databinding.FragmentMoviesBinding
@@ -32,29 +36,13 @@ class MoviesFragment : Fragment() {
 
     private val viewModel by viewModel<MoviesViewModel>()
 
-    private val adapter = MoviesAdapter {  movie ->
+    private val adapter = MoviesAdapter { movie ->
         if (clickDebounce()) {
-            // Навигируемся на следующий экран
-            parentFragmentManager.commit {
-                replace(
-                    // Указали, в каком контейнере работаем
-                    R.id.rootFragmentContainerView,
-                    // Создали фрагмент
-                    DetailsFragment.newInstance(
-                        movieId = movie.id,
-                        posterUrl = movie.image
-                    ),
-                    // Указали тег фрагмента
-                    DetailsFragment.TAG
-                )
+            findNavController().navigate(R.id.action_moviesFragment_to_detailsFragment,
+                DetailsFragment.createArgs(movie.id, movie.image))
 
-                // Добавляем фрагмент в Back Stack
-                addToBackStack(DetailsFragment.TAG)
-            }
         }
     }
-
-    private val handler = Handler(Looper.getMainLooper())
 
     private lateinit var binding: FragmentMoviesBinding
 
@@ -96,7 +84,7 @@ class MoviesFragment : Fragment() {
             override fun afterTextChanged(s: Editable?) {
             }
         }
-        textWatcher?.let { queryInput.addTextChangedListener(it) }
+        textWatcher.let { queryInput.addTextChangedListener(it) }
 
         // Здесь пришлось заменить LifecycleOwner на ViewLifecycleOwner
         viewModel.observeState().observe(viewLifecycleOwner) {
@@ -111,7 +99,7 @@ class MoviesFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        textWatcher?.let { queryInput.removeTextChangedListener(it) }
+        textWatcher.let { queryInput.removeTextChangedListener(it) }
     }
 
     private fun showToast(additionalMessage: String?) {
@@ -160,7 +148,10 @@ class MoviesFragment : Fragment() {
         val current = isClickAllowed
         if (isClickAllowed) {
             isClickAllowed = false
-            handler.postDelayed({ isClickAllowed = true }, CLICK_DEBOUNCE_DELAY)
+            viewLifecycleOwner.lifecycleScope.launch {
+                delay(CLICK_DEBOUNCE_DELAY)
+                isClickAllowed = true
+            }
         }
         return current
     }

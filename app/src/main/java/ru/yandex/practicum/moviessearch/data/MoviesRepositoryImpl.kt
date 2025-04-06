@@ -47,8 +47,16 @@ class MoviesRepositoryImpl(
                 with(response as MovieDetailsResponse) {
                     Resource.Success(
                         MovieDetails(
-                            id, title, imDbRating ?: "", year,
-                            countries, genres, directors, writers, stars, plot
+                            id = id,
+                            title = title,
+                            imDbRating = imDbRating,
+                            year = year,
+                            countries = countries,
+                            genres = genres,
+                            directors = directors,
+                            writers = writers,
+                            stars = stars,
+                            plot = plot,
                         )
                     )
                 }

@@ -1,12 +1,13 @@
 package ru.yandex.practicum.moviessearch.presentation.names
 
 import android.content.Context
-import android.os.Handler
-import android.os.Looper
-import android.os.SystemClock
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import ru.yandex.practicum.moviessearch.R
 import ru.yandex.practicum.moviessearch.domain.api.NamesInteractor
 import ru.yandex.practicum.moviessearch.domain.models.Person
@@ -18,10 +19,7 @@ class NamesViewModel(private val context: Context,
 
     companion object {
         private const val SEARCH_DEBOUNCE_DELAY = 2000L
-        private val SEARCH_REQUEST_TOKEN = Any()
     }
-
-    private val handler = Handler(Looper.getMainLooper())
 
     private val stateLiveData = MutableLiveData<NamesState>()
     fun observeState(): LiveData<NamesState> = stateLiveData
@@ -31,26 +29,22 @@ class NamesViewModel(private val context: Context,
 
     private var latestSearchText: String? = null
 
-    override fun onCleared() {
-        handler.removeCallbacksAndMessages(SEARCH_REQUEST_TOKEN)
-    }
+    private var searchJob: Job? = null
+
 
     fun searchDebounce(changedText: String) {
         if (latestSearchText == changedText) {
             return
         }
 
-        this.latestSearchText = changedText
-        handler.removeCallbacksAndMessages(SEARCH_REQUEST_TOKEN)
+        latestSearchText = changedText
 
-        val searchRunnable = Runnable { searchRequest(changedText) }
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            delay(SEARCH_DEBOUNCE_DELAY)
+            searchRequest(changedText)
+        }
 
-        val postTime = SystemClock.uptimeMillis() + SEARCH_DEBOUNCE_DELAY
-        handler.postAtTime(
-            searchRunnable,
-            SEARCH_REQUEST_TOKEN,
-            postTime,
-        )
     }
 
     private fun searchRequest(newSearchText: String) {

@@ -1,4 +1,4 @@
-package ru.yandex.practicum.moviessearch.ui.info
+package ru.yandex.practicum.moviessearch.ui.names
 
 import android.os.Bundle
 import android.view.LayoutInflater

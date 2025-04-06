@@ -9,7 +9,6 @@ import ru.yandex.practicum.moviessearch.domain.models.MovieDetails
 class AboutViewModel(private val movieId: String,
                      private val moviesInteractor: MoviesInteractor, ) : ViewModel() {
 
-
     private val stateLiveData = MutableLiveData<AboutState>()
     fun observeState(): LiveData<AboutState> = stateLiveData
 
