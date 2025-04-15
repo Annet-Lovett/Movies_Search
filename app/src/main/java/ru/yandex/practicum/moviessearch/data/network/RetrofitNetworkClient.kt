@@ -3,6 +3,8 @@ package ru.yandex.practicum.moviessearch.data.network
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import ru.yandex.practicum.moviessearch.data.NetworkClient
 import ru.yandex.practicum.moviessearch.data.dto.MovieCastRequest
 import ru.yandex.practicum.moviessearch.data.dto.MovieDetailsRequest
@@ -15,32 +17,38 @@ class RetrofitNetworkClient(
     private val context: Context,
 ) : NetworkClient {
 
-    override fun doRequest(dto: Any): Response {
+    override suspend fun doRequest(dto: Any): Response {
         if (isConnected() == false) {
             return Response().apply { resultCode = -1 }
         }
         // Добавили ещё одну проверку
-        if ((dto !is MoviesSearchRequest) && (dto !is MovieDetailsRequest) && (dto !is MovieCastRequest) && (dto !is NamesSearchRequest)) {
+        if ((dto !is MoviesSearchRequest) &&
+            (dto !is MovieDetailsRequest) &&
+            (dto !is MovieCastRequest) &&
+            (dto !is NamesSearchRequest)) {
             return Response().apply { resultCode = 400 }
         }
 
-        // Добавили в выражение when ещё одну ветку
-        val response = try {
-            when (dto) {
-                is MoviesSearchRequest -> imdbService.searchMovies(dto.expression).execute()
-                is MovieDetailsRequest -> imdbService.getMovieDetails(dto.movieId).execute()
-                is NamesSearchRequest -> imdbService.searchNames(dto.expression).execute()
-                else -> imdbService.getFullCast((dto as MovieCastRequest).movieId).execute()
+        return withContext(Dispatchers.IO) {
+            try {
+            val response =
+                when (dto) {
+                    is MoviesSearchRequest -> imdbService.searchMovies(dto.expression)
+                    is MovieDetailsRequest -> imdbService.getMovieDetails(dto.movieId)
+                    is NamesSearchRequest -> imdbService.searchNames(dto.expression)
+                    else -> imdbService.getFullCast((dto as MovieCastRequest).movieId)
+                }
+
+                response.apply { resultCode = 200 }
+                response
             }
-        } catch (e: Exception) {
-            null
+
+            catch (e: Throwable) {
+                Response().apply { resultCode = 500 }
+            }
         }
-        val body = response?.body()
-        return if (body != null) {
-            body.apply { resultCode = response.code() }
-        } else {
-            Response().apply { resultCode = response?.code() ?: -1 }
-        }
+
+
     }
 
     private fun isConnected(): Boolean {
@@ -58,15 +66,3 @@ class RetrofitNetworkClient(
         return false
     }
 }
-
-/*
-        val response = try {
-            when (dto) {
-                is MoviesSearchRequest -> imdbService.searchMovies(dto.expression).execute()
-                is MovieDetailsRequest -> imdbService.getMovieDetails(dto.movieId).execute()
-                else -> imdbService.getFullCast((dto as MovieCastRequest).movieId).execute()
-            }
-        } catch (e: Exception) {
-
-        }
- */

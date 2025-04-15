@@ -11,6 +11,10 @@ class RootActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityRootBinding
 
+    fun animateBottomNavigationView() {
+        binding.bottomNavigationView.visibility = View.GONE
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -19,6 +23,8 @@ class RootActivity : AppCompatActivity() {
 
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.rootFragmentContainerView) as NavHostFragment
         val navController = navHostFragment.navController
+
+
 
         binding.bottomNavigationView.setupWithNavController(navController)
 

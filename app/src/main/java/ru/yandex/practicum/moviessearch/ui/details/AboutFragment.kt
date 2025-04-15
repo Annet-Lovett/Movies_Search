@@ -1,12 +1,10 @@
 package ru.yandex.practicum.moviessearch.ui.details
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.commit
 import androidx.navigation.fragment.findNavController
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
@@ -39,7 +37,7 @@ class AboutFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding = FragmentAboutBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -49,7 +47,7 @@ class AboutFragment : Fragment() {
 
         aboutViewModel.observeState().observe(viewLifecycleOwner) {
             when(it) {
-                is AboutState.Content -> showDetails(it.movie)
+                is AboutState.Content -> it.movieDetails?.let { it1 -> showDetails(it1) }
                 is AboutState.Error -> showErrorMessage(it.message)
             }
         }
